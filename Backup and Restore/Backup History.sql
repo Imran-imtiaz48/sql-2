@@ -9,27 +9,29 @@ notes:
 
 */
 
-
 SELECT 
-CONVERT(CHAR(100), SERVERPROPERTY('Servername')) AS Server, 
-msdb.dbo.backupset.database_name, 
-msdb.dbo.backupset.backup_start_date, 
-msdb.dbo.backupset.backup_finish_date, 
-msdb.dbo.backupset.expiration_date, 
-CASE msdb..backupset.type 
-WHEN 'D' THEN 'Database' 
-WHEN 'L' THEN 'Log' 
-END AS backup_type, 
-msdb.dbo.backupset.backup_size, 
-msdb.dbo.backupmediafamily.logical_device_name, 
-msdb.dbo.backupmediafamily.physical_device_name, 
-msdb.dbo.backupset.name AS backupset_name, 
-msdb.dbo.backupset.description 
-FROM msdb.dbo.backupmediafamily 
-INNER JOIN msdb.dbo.backupset ON msdb.dbo.backupmediafamily.media_set_id = msdb.dbo.backupset.media_set_id 
-WHERE (CONVERT(datetime, msdb.dbo.backupset.backup_start_date, 102) >= GETDATE() - 7) 
-AND database_name = 'TestAG2'
+    CONVERT(CHAR(100), SERVERPROPERTY('Servername')) AS Server, 
+    bs.database_name, 
+    bs.backup_start_date, 
+    bs.backup_finish_date, 
+    bs.expiration_date, 
+    CASE 
+        WHEN bs.type = 'D' THEN 'Database' 
+        WHEN bs.type = 'L' THEN 'Log' 
+    END AS backup_type, 
+    bs.backup_size, 
+    bmf.logical_device_name, 
+    bmf.physical_device_name, 
+    bs.name AS backupset_name, 
+    bs.description
+FROM 
+    msdb.dbo.backupmediafamily AS bmf
+INNER JOIN 
+    msdb.dbo.backupset AS bs ON bmf.media_set_id = bs.media_set_id 
+WHERE 
+    CONVERT(DATETIME, bs.backup_start_date, 102) >= DATEADD(DAY, -7, GETDATE()) 
+    AND bs.database_name = 'TestAG2'
 ORDER BY 
-msdb.dbo.backupset.database_name, 
-msdb.dbo.backupset.backup_finish_date 
+    bs.database_name, 
+    bs.backup_finish_date;
 
